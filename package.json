@@ -1,0 +1,23 @@
+{
+  "name": "keyp-onramper",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "dev": "nodemon server.js",
+    "db": "npx supabase start",
+    "start": "yarn db && yarn run dev",
+    "stop": "npx supabase stop"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.14.0",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "node-fetch": "^3.3.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.22",
+    "supabase": "^1.46.5"
+  }
+}
