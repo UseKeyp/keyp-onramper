@@ -1,7 +1,6 @@
 import express from "express";
 import fetch from "node-fetch";
 import { config } from "dotenv";
-import { parseCollection, parseResponse } from "./parseCollection.js";
 import { saveResponse } from "./database.js";
 
 config();
@@ -29,23 +28,16 @@ app.get("/getPaymentTypes", async (req, res) => {
 })
 
 app.get("/getQuote", async (req, res) => {
-  const { amount, paymentMethod } = req.query;
-  const url = `https://api.onramper.com/quotes/eur/eth?amount=${amount||100}&paymentMethod=${paymentMethod||"creditcard"}`;
+  const { amount, paymentMethod, fiat, currency } = req.query;
+  const url = `https://api.onramper.com/quotes/${fiat||"usd"}/${currency||"eth"}?amount=${amount||100}&paymentMethod=${paymentMethod||"creditcard"}`;
   
-  // REAL CODE
-  // const response = await fetch(url, {
-  //   method: "GET",
-  //   headers: {
-  //     Authorization: process.env.ONRAMPER_API_KEY
-  //   }
-  // });
-  // const data = await response.json();
-  
-  // Simulating with Postman collection
-  const response = parseCollection("OnramperAPICollection");
-  const getQuote = response["item"].find(item => item["name"] === "getQuote");
-  const getQuoteResponse = getQuote["response"];
-  const data = parseResponse(getQuoteResponse);
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      Authorization: process.env.ONRAMPER_API_KEY
+    }
+  });
+  const data = await response.json();
   console.log(data)
   await saveResponse(url, data);
 
@@ -53,7 +45,7 @@ app.get("/getQuote", async (req, res) => {
 })
 
 app.post("/checkoutintent", async (req, res) => {
-  const url = "https://api.onramper.com/checkout/intent";
+  const url = "https://api.onramper.com/checkoutintent";
   const postData = {}
   await fetch(url, {
     method: "POST",
@@ -65,24 +57,53 @@ app.post("/checkoutintent", async (req, res) => {
   })
 })
 
-app.get("/getCheckoutUrl", async (req, res) => {
-  // const { amount, currency, paymentMethod, network, address } = req.body;
-  // Simulating with Postman collection
-  const response = parseCollection("OnramperAPICollection");
-  const getQuote = response["item"].find(item => item["name"] === "getQuote");
-  const getQuoteResponse = getQuote["response"];
-  const data = parseResponse(getQuoteResponse);
-  
-  const singleArray = []
-  data.forEach(arr => {
-    arr.forEach(item => {
-      singleArray.push(item)
-    })
+async function getBestQuote({
+  source,
+  destination,
+  amount,
+  type,
+  paymentMethod,
+  wallet,
+  network
+}) {
+  // getQuote
+  const url = `https://api.onramper.com/quotes/${source||"usd"}/${destination||"eth"}?amount=${amount||100}&paymentMethod=${paymentMethod||"creditcard"}&network=${network||"ethereum"}`;
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      Authorization: process.env.ONRAMPER_API_KEY
+    }
   });
-  const sorted = singleArray.sort((a, b) => -1*(a.payout - b.payout));
+  const quotes = await response.json();
+  console.log("quotes:", quotes)
+  
+  const sorted = quotes.sort((a, b) => -1*(a.payout - b.payout));
   const bestQuote = sorted[0];
-  console.log("Best Quote: ", bestQuote);
-  console.log("\nAll Quotes: ", sorted);
+  return bestQuote;
+}
+
+app.get("/getCheckoutUrl", async (req, res) => {
+  const { amount, fiat, currency, paymentMethod, network, address } = req.query;
+  
+  const supported = await fetch("https://api.onramper.com/supported", {
+    method: "GET",
+    headers: {
+      Authorization: process.env.ONRAMPER_API_KEY
+    }
+  });
+  const { crypto } = (await supported.json()).message
+  const cryptoId = crypto.find(c => c.symbol === currency && c.network === network).id;
+
+  const bestQuote = await getBestQuote({
+    source: fiat||"usd",
+    destination: cryptoId||"eth",
+    amount: amount||100,
+    type: "buy",
+    paymentMethod: paymentMethod||"creditcard",
+    wallet: address||"",
+    network: network||"ethereum"
+  });
+  
   return res.json(bestQuote);
 })
 
