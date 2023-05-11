@@ -112,6 +112,7 @@ app.get("/getCheckoutUrl", async (req, res) => {
   return res.json(bestQuote);
 })
 
+<<<<<<< HEAD
 app.post("/getCheckoutUrl", async (req, res) => {
   const { amount, fiat, currency, paymentMethod, network, address } = req.body;
   
@@ -164,6 +165,6 @@ app.post("/getCheckoutUrl", async (req, res) => {
   return res.json(result);
 })
 
-app.listen(3000, () => {
-  console.log("Server running on port 3000");
+app.listen(4200, () => {
+  console.log("Server running on port 4200");
 });
