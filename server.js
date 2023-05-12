@@ -112,7 +112,6 @@ app.get("/getCheckoutUrl", async (req, res) => {
   return res.json(bestQuote);
 })
 
-<<<<<<< HEAD
 app.post("/getCheckoutUrl", async (req, res) => {
   const { amount, fiat, currency, paymentMethod, network, address } = req.body;
   
