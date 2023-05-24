@@ -7,9 +7,16 @@ export const Onramper = () => {
   const network = searchParams.get('network'); 
   const currentUserAddress = searchParams.get('address');
 
+  console.log('onramper page')
   console.log(currency, network, currentUserAddress);
   // prevent loading of iframe if any of the required params are missing
-  if (!currency || !network || !currentUserAddress) return null;
+  if (!currency || !network || !currentUserAddress) {
+    return (
+      <div>
+        <h1 style={{ color: 'red', textAlign: 'center', padding: '2rem' }}>Error: you must include currency, network and address URL parameters</h1>
+      </div>
+    )
+  }
 
   return (
     <div className="onramper-container">
