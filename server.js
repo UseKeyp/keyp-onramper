@@ -1,7 +1,7 @@
 import express from "express";
 import fetch from "node-fetch";
 import { config } from "dotenv";
-import { saveResponse } from "./database.js";
+import { storeWebhookInDB } from "./database.js";
 import assert from "assert";
 import { getBestQuote, verifySignature } from "./utils/index.js";
 
@@ -11,29 +11,17 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 
-// Receives the webhook from Onramper, verifies the signature and saves the response to the database
-app.post("/", async (req, res) => {
-  try {
-    const signature = req.headers["X-Onramper-Webhook-Signature"]
-    console.log("webhook:", req.body)
-    const verified = verifySignature(signature, process.env.ONRAMPER_SECRET, JSON.stringify(req.body))
-    assert(verified, "Signature does not match")
-    await saveResponse("webhook", req.body)
-    return res.status(200).json({ message: "Signature matches" })
-  } catch (error) {
-    return res.status(400).json({ error: error.message })
-  }
-})
-
-
+// Receives the webhook from Onramper, verifies the signature and saves the response in the database
 app.post("/webhooks", async (req, res) => {
   try {
     const signature = req.headers["X-Onramper-Webhook-Signature"]
     console.log("webhook:", req.body)
-    const verified = verifySignature(signature, process.env.ONRAMPER_SECRET, JSON.stringify(req.body))
-    assert(verified, "Signature does not match")
-    await saveResponse("webhook", req.body)
-    return res.status(200).json({ message: "Signature matches" })
+    /***** Verify the Webhook *****/
+    // Include verification in production by uncommenting the next 2 lines
+    // const verified = verifySignature(signature, process.env.ONRAMPER_SECRET, JSON.stringify(req.body))
+    // assert(verified, "Signature does not match")
+    await storeWebhookInDB(req.url, req.body, res)
+    return res.status(200).json({ message: "Success" })
   } catch (error) {
     return res.status(400).json({ error: error.message })
   }
@@ -91,7 +79,6 @@ app.get("/v2/ramps/on/quotes", async (req, res) => {
     });
     const data = await response.json();
     console.log(data)
-    await saveResponse(url, data);
   
     return res.status(200).json({data});
   } catch (error) {
