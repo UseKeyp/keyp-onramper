@@ -1,0 +1,14 @@
+.heading-wrapper {
+  margin: 4rem auto;
+}
+.heading-title {
+  font-size: 3rem;
+  font-weight: bold;
+  text-align: center;
+  color: #4a4d53;
+  font-family: Inter,sans-serif;
+}
+.heading-logo {
+  margin: 1rem auto;
+  display: block;
+}

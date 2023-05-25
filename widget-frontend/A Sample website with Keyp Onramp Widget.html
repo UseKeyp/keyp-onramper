@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<!-- saved from url=(0014)about:internet -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>A Sample website with Keyp Onramp Widget</title>
+  <meta name="description" content="Sample website with Keyp Onramp Widget">
+  <meta name="author" content="Keyp">
+
+  <meta property="og:title" content="Basic HTML5 website with Keyp Onramp Widget">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="">
+  <meta property="og:description" content="Sample website with Keyp Onramp Widget">
+  <meta property="og:image" content="image.png">
+
+  <link rel="icon" href="file:///Users/konradgnat/dev/blockchain/keyp/keyp-onramper/widget-frontend/favicon.png">
+  <link rel="icon" href="file:///Users/konradgnat/dev/blockchain/keyp/keyp-onramper/widget-frontend/favicon.png" type="image/png">
+  <link rel="apple-touch-icon" href="file:///apple-touch-icon.png">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com/">
+  <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
+  <link href="./A Sample website with Keyp Onramp Widget_files/css2" rel="stylesheet">
+
+  <link rel="stylesheet" href="./A Sample website with Keyp Onramp Widget_files/styles.css">
+
+</head>
+
+<body>
+  <div class="heading-wrapper">
+    <img src="./A Sample website with Keyp Onramp Widget_files/keyp-logo.svg" class="heading-logo">
+    <h1 class="heading-title">Onramper JavaScript Widget Demo</h1>
+  </div>
+  <div id="keypWidget"><iframe id="keypOnrampWidgetId" allow="accelerometer; autoplay; camera; gyroscope; payment" style="border: none; min-height: 630px; min-width: 100%; overflow: hidden;" src="./A Sample website with Keyp Onramp Widget_files/saved_resource.html"></iframe></div>
+  <script src="./A Sample website with Keyp Onramp Widget_files/keypOnrampWidget.js"></script>
+  <script>
+    var getUrlParameter = function getUrlParameter(sParam) {
+      var sPageURL = window.location.search.substring(1),
+      sURLVariables = sPageURL.split('&'),
+      sParameterName,
+      i;
+
+      for (i = 0; i < sURLVariables.length; i++) {
+          sParameterName = sURLVariables[i].split('=');
+
+          if (sParameterName[0] === sParam) {
+              return sParameterName[1] === undefined ? true : decodeURIComponent(sParameterName[1]);
+          }
+      }
+      return false;
+    };
+    const currency = getUrlParameter('currency');
+    const network = getUrlParameter('network');
+    const walletAddress = getUrlParameter('address');
+    const apiKey = getUrlParameter('apiKey'); //'<Your Onramper API key Here>';
+
+    let createWidget = new keypOnrampWidget({
+      elementId: "keypWidget",
+      apiKey,
+      network,
+      currency,
+      walletAddress
+    });
+    createWidget.init();
+  </script>
+
+</body></html>
