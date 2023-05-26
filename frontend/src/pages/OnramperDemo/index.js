@@ -2,7 +2,7 @@ import { KeypOnrampWidget } from '../../components/KeypOnrampWidget';
 import "./index.css";
 import KeypLogo from '../../images/keyp-logo.svg';
 
-export const Onramper = () => {
+export const OnramperDemo = () => {
 
   return (
     <div className="demo-container">
