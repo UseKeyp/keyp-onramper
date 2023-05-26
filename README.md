@@ -13,7 +13,7 @@ make sure you have docker running locally
 run `yarn start`
 
 
-# How to run Onramper Widget React.js app
+# How to run Onramper Widget React.js Demo App
 
 
 1. `cd frontend`
@@ -27,6 +27,8 @@ run `yarn start`
 5. `yarn start`
 
 6. In a browser open `http://localhost:3000/onramper?currency=ETH&network=POLYGON&address=0x7b86F576669f8d20a8244dABEFc65b31d7dEB3f2`
+
+7. If you want to inspect the 'Keyp wrapper around onramper widget' in the browser open this URL (notice the /onramperDemo path): `http://localhost:3000/onramperDemo?currency=ETH&network=POLYGON&address=0x7b86F576669f8d20a8244dABEFc65b31d7dEB3f2`
 
 
 # How to run Onramper Widget JavaScript app
