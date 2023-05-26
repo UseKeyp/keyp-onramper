@@ -1,169 +1,191 @@
 import express from "express";
 import fetch from "node-fetch";
 import { config } from "dotenv";
-import { saveResponse } from "./database.js";
+import { storeWebhookInDB } from "./database.js";
+import assert from "assert";
+import { getBestQuote, verifySignature } from "./utils/index.js";
 
 config();
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.get("/limits", async (req, res) => {
-  const url = "https://api.onramper.com/supported/limits/moonpay/eur/eth/creditcard";
-  const response = await fetch(url);
-  const data = await response.json();
-  return res.json(data);
-})
 
-app.get("/getAllCurrencies", async (req, res) => {
-  const url = "https://api.onramper.com/supported";
-  const response = await fetch(url);
-  const data = await response.json();
-  return res.json(data);
-})
-
-app.get("/getPaymentTypes", async (req, res) => {
-  const url = "https://api.onramper.com/supported/payment-types/moonpay/eur/btc";
-  const response = await fetch(url);
-  const data = await response.json();
-  return res.json(data);
-})
-
-app.get("/getQuote", async (req, res) => {
-  const { amount, paymentMethod, fiat, currency } = req.query;
-  const url = `https://api.onramper.com/quotes/${fiat||"usd"}/${currency||"eth"}?amount=${amount||100}&paymentMethod=${paymentMethod||"creditcard"}`;
-  
-  const response = await fetch(url, {
-    method: "GET",
-    headers: {
-      Authorization: process.env.ONRAMPER_API_KEY
-    }
-  });
-  const data = await response.json();
-  console.log(data)
-  await saveResponse(url, data);
-
-  return res.json(data);
-})
-
-app.post("/checkoutintent", async (req, res) => {
-  const url = "https://api.onramper.com/checkoutintent";
-  const postData = {}
-  await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": process.env.ONRAMPER_API_KEY
-    },
-    body: JSON.stringify(postData)
-  })
-})
-
-async function getBestQuote({
-  source,
-  destination,
-  amount,
-  type,
-  paymentMethod,
-  wallet,
-  network
-}) {
-  // getQuote
-  const url = `https://api.onramper.com/quotes/${source||"usd"}/${destination||"eth"}?amount=${amount||100}&paymentMethod=${paymentMethod||"creditcard"}&network=${network||"ethereum"}`;
-  const response = await fetch(url, {
-    method: "GET",
-    headers: {
-      Authorization: process.env.ONRAMPER_API_KEY
-    }
-  });
-  const quotes = await response.json();
-  // console.log("quotes:", quotes)
-  
-  const sorted = quotes.sort((a, b) => -1*(a.payout - b.payout));
-  const bestQuote = sorted[0];
-  return bestQuote;
-}
-
-app.get("/getCheckoutUrl", async (req, res) => {
-  const { amount, fiat, currency, paymentMethod, network, address } = req.query;
-  
-  const supported = await fetch("https://api.onramper.com/supported", {
-    method: "GET",
-    headers: {
-      Authorization: process.env.ONRAMPER_API_KEY
-    }
-  });
-  const { crypto: cryptos } = (await supported.json()).message
-  const crypto = cryptos.find(c => c.code.toLowerCase() === currency && c.network.toLowerCase() === network);
-  console.log("crypto:", crypto)
-  const cryptoId = crypto?.id;
-
-  const bestQuote = await getBestQuote({
-    source: fiat||"usd",
-    destination: cryptoId||"eth",
-    amount: amount||100,
-    type: "buy",
-    paymentMethod: paymentMethod||"creditcard",
-    wallet: address||"",
-    network: network||"ethereum"
-  });
-  console.log("Best quote:", bestQuote)
-  
-  return res.json(bestQuote);
-})
-
-app.post("/getCheckoutUrl", async (req, res) => {
-  const { amount, fiat, currency, paymentMethod, network, address } = req.body;
-  
-  const supported = await fetch("https://api.onramper.com/supported", {
-    method: "GET",
-    headers: {
-      Authorization: process.env.ONRAMPER_API_KEY
-    }
-  });
-  const { crypto: cryptos } = (await supported.json()).message
-  const crypto = cryptos.find(c => c.code.toLowerCase() === currency && c.network.toLowerCase() === network);
-  console.log("crypto:", crypto)
-  const cryptoId = crypto?.id;
-
-  const bestQuote = await getBestQuote({
-    source: fiat,
-    destination: cryptoId,
-    amount: amount,
-    type: "buy",
-    paymentMethod: paymentMethod,
-    wallet: address,
-    network: network
-  });
-  console.log("Best quote:", bestQuote)
-
-  const url = "https://api.onramper.com/checkout/intent";
-  const payload = {
-    onramp: bestQuote.ramp,
-    source: fiat,
-    destination: cryptoId,
-    amount,
-    type: "buy",
-    paymentMethod,
-    wallet: address,
-    network: network
+// Receives the webhook from Onramper, verifies the signature and saves the response in the database
+app.post("/webhooks", async (req, res) => {
+  try {
+    const signature = req.headers["X-Onramper-Webhook-Signature"]
+    console.log("webhook:", req.body)
+    /***** Verify the Webhook *****/
+    // Include verification in production by uncommenting the next 2 lines
+    // const verified = verifySignature(signature, process.env.ONRAMPER_SECRET, JSON.stringify(req.body))
+    // assert(verified, "Signature does not match")
+    await storeWebhookInDB(req.url, req.body, res)
+    return res.status(200).json({ message: "Success" })
+  } catch (error) {
+    return res.status(400).json({ error: error.message })
   }
-  console.log("payload:", payload)
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": process.env.ONRAMPER_API_KEY
-    },
-    body: JSON.stringify(payload)
-  })
-  
-  console.log("status:", response.status, response.statusText)
-  const result = await response.json();
-  console.log("response:", result)
-  return res.json(result);
 })
 
-app.listen(4200, () => {
-  console.log("Server running on port 4200");
+
+app.get("/v2/ramps/limits", async (req, res) => {
+  try {
+    const url = "https://api.onramper.com/supported/limits";
+    const response = await fetch(url);
+    const data = await response.json();
+    return res.status(200).json({data});
+  } catch (error) {
+    return res.status(400).json({ error: error.message })
+  }
+})
+
+
+app.get("/v2/ramps/getAllCurrencies", async (req, res) => {
+  try {
+    const url = "https://api.onramper.com/supported";
+    const response = await fetch(url);
+    const data = await response.json();
+    return res.status(200).json({data});
+  } catch (error) {
+    return res.status(400).json({ error: error.message })
+  }
+})
+
+
+app.get("/v2/ramps/paymentTypes", async (req, res) => {
+  try {
+    const url = "https://api.onramper.com/supported/payment-types";
+    const response = await fetch(url);
+    const data = await response.json();
+    return res.status(200).json({data});
+  } catch (error) {
+    return res.status(400).json({ error: error.message })
+  }
+})
+
+
+app.get("/v2/ramps/on/quotes", async (req, res) => {
+  try {
+    const { amount, paymentMethod, fiat, currency } = req.query;
+    assert(amount, "Amount is required")
+    assert(fiat, "fiat is required")
+    assert(currency, "currency is required")
+    const url = `https://api.onramper.com/quotes/${fiat||"usd"}/${currency||"eth"}?amount=${amount}&paymentMethod=${paymentMethod||"creditcard"}`;
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        Authorization: process.env.ONRAMPER_API_KEY
+      }
+    });
+    const data = await response.json();
+    console.log(data)
+  
+    return res.status(200).json({data});
+  } catch (error) {
+    return res.status(400).json({ error: error.message })
+  }
+})
+
+
+app.get("/v2/ramps/on/best-quote", async (req, res) => {
+  try {
+    const { amount, fiat, currency, paymentMethod, network, address } = req.query;
+    assert(amount, "Amount is required")
+    assert(address, "Wallet address is required")
+    const supported = await fetch("https://api.onramper.com/supported", {
+      method: "GET",
+      headers: {
+        Authorization: process.env.ONRAMPER_API_KEY
+      }
+    });
+    const { crypto: cryptos } = (await supported.json()).message
+    const crypto = cryptos.find(c => c.code.toLowerCase() === currency && c.network.toLowerCase() === network);
+    console.log("crypto:", crypto)
+    const cryptoId = crypto?.id;
+  
+    const bestQuote = await getBestQuote({
+      source: fiat||"usd",
+      destination: cryptoId||"eth",
+      amount,
+      type: "buy",
+      paymentMethod: paymentMethod||"creditcard",
+      wallet: address,
+      network: network||"ethereum"
+    });
+    console.log("Best quote:", bestQuote)
+    return res.status(200).json({data: bestQuote});
+  } catch (error) {
+    return res.status(400).json({ error: error.message })
+  }
+})
+
+
+app.get("/v2/ramps/on/checkout", async (req, res) => {
+  try {
+    /***************************************
+     * Authenticate Keyp ACCESS_TOKEN Here *
+     ***************************************/
+    
+    const { amount, fiat, currency, paymentMethod, network, address } = req.query;
+    assert(amount, "Amount is required")
+    assert(address, "Wallet address is required")
+    assert(network, "Network is required")
+
+    const supported = await fetch("https://api.onramper.com/supported", {
+      method: "GET",
+      headers: {
+        Authorization: process.env.ONRAMPER_API_KEY
+      }
+    });
+    const { crypto: cryptos } = (await supported.json()).message
+    const crypto = cryptos.find(c => c.code.toLowerCase() === currency.toLowerCase() && c.network.toLowerCase() === network.toLowerCase());
+    const cryptoId = crypto?.id;
+  
+    const bestQuote = await getBestQuote({
+      source: fiat,
+      destination: cryptoId,
+      amount: amount,
+      type: "buy",
+      paymentMethod: paymentMethod,
+      wallet: address,
+      network: network
+    });
+    console.log("Best quote:", bestQuote)
+  
+    const baseUrl = "https://buy.onramper.com/";
+    const url = `${baseUrl}?networkWallets=${network.toUpperCase()}:${address}&defaultAmount=${amount}&defaultFiat=${fiat}&defaultCrypto=${cryptoId.toUpperCase()}&apiKey=${process.env.ONRAMPER_API_KEY}`
+    return res.status(200).json({ url });
+    // const payload = {
+    //   onramp: bestQuote.ramp,
+    //   source: fiat,
+    //   destination: cryptoId,
+    //   amount: parseFloat(amount),
+    //   type: "buy",
+    //   paymentMethod,
+    //   wallet: address,
+    //   network: network,
+    // }
+    // console.log("payload:", payload)
+    // const response = await fetch(url, {
+    //   method: "POST",
+    //   headers: {
+    //     "Content-Type": "application/json",
+    //     "Authorization": process.env.ONRAMPER_API_KEY
+    //   },
+    //   body: JSON.stringify(payload)
+    // })
+    
+    // console.log("status:", response.status, response.statusText)
+    // const result = await response.json();
+    // console.log("response:", result)
+    // assert(result.status === 200, result.message)
+    // return res.status(200).json({data: result});
+  } catch (error) {
+    return res.status(400).json({ error: error.message })
+  }
+})
+
+
+app.listen(3000, () => {
+  console.log("Server running on port 3000");
 });
