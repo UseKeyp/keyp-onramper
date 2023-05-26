@@ -6,6 +6,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "nodemon server.js",
+    "start:frontend": "cd frontend && yarn start",
     "db": "npx supabase start",
     "start": "yarn db && yarn run dev",
     "stop": "npx supabase stop"

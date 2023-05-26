@@ -1,0 +1,15 @@
+.demo-container {
+   margin: 1rem;
+}
+.demo-title {
+   margin: 2rem auto;
+   text-align: center;
+   font-size: 3rem;
+   color: #4a4d53;
+   font-family: Inter,sans-serif;
+}
+.demo-logo {
+   width: 200px;
+   margin: 2rem auto;
+   display: block;
+}

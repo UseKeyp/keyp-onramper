@@ -1,0 +1,68 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>A Sample website with Keyp Onramp Widget</title>
+  <meta name="description" content="Sample website with Keyp Onramp Widget">
+  <meta name="author" content="Keyp">
+
+  <meta property="og:title" content="Basic HTML5 website with Keyp Onramp Widget">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="">
+  <meta property="og:description" content="Sample website with Keyp Onramp Widget">
+  <meta property="og:image" content="image.png">
+
+  <link rel="icon" href="./favicon.png">
+  <link rel="icon" href="./favicon.png" type="image/png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/styles.css?v=1.0">
+
+</head>
+
+<body>
+  <div class="heading-wrapper">
+    <image src="./images/keyp-logo.svg" class="heading-logo" />
+    <h1 class="heading-title">Onramper JavaScript Widget Demo</h1>
+  </div>
+  <div id="keypWidget"></div>
+  <script src="js/keypOnrampWidget.js"></script>
+  <script >
+    var getUrlParameter = function getUrlParameter(sParam) {
+      var sPageURL = window.location.search.substring(1),
+      sURLVariables = sPageURL.split('&'),
+      sParameterName,
+      i;
+
+      for (i = 0; i < sURLVariables.length; i++) {
+          sParameterName = sURLVariables[i].split('=');
+
+          if (sParameterName[0] === sParam) {
+              return sParameterName[1] === undefined ? true : decodeURIComponent(sParameterName[1]);
+          }
+      }
+      return false;
+    };
+    const currency = getUrlParameter('currency');
+    const network = getUrlParameter('network');
+    const walletAddress = getUrlParameter('address');
+    const apiKey = getUrlParameter('apiKey');
+
+    let createWidget = new keypOnrampWidget({
+      elementId: "keypWidget",
+      apiKey,
+      network,
+      currency,
+      walletAddress
+    });
+    createWidget.init();
+  </script>
+</body>
+</html>
