@@ -10,6 +10,10 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// TO DO:
+// - Fix issues
+// - Create collections from thunderclient
+// - Remove defaults and add error messages for unsupported currencies, networks, etc.
 
 // Receives the webhook from Onramper, verifies the signature and saves the response in the database
 app.post("/webhooks", async (req, res) => {
@@ -27,10 +31,11 @@ app.post("/webhooks", async (req, res) => {
   }
 })
 
-
-app.get("/v2/ramps/limits", async (req, res) => {
+// Fix Here: Add req params
+app.get("/v2/ramps/limits/:ramp/:fiat/:crypto/:paymentMethod", async (req, res) => {
   try {
-    const url = "https://api.onramper.com/supported/limits";
+    const { fiat, crypto, paymentMethod, ramp } = req.params;
+    const url = `https://api.onramper.com/supported/limits/${ramp}/${fiat}/${crypto}/${paymentMethod}`;
     const response = await fetch(url);
     const data = await response.json();
     return res.status(200).json({data});
@@ -43,7 +48,12 @@ app.get("/v2/ramps/limits", async (req, res) => {
 app.get("/v2/ramps/getAllCurrencies", async (req, res) => {
   try {
     const url = "https://api.onramper.com/supported";
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        Authorization: process.env.ONRAMPER_API_KEY
+      }
+    });
     const data = await response.json();
     return res.status(200).json({data});
   } catch (error) {
@@ -55,7 +65,12 @@ app.get("/v2/ramps/getAllCurrencies", async (req, res) => {
 app.get("/v2/ramps/paymentTypes", async (req, res) => {
   try {
     const url = "https://api.onramper.com/supported/payment-types";
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        Authorization: process.env.ONRAMPER_API_KEY
+      }
+    });
     const data = await response.json();
     return res.status(200).json({data});
   } catch (error) {
@@ -70,7 +85,7 @@ app.get("/v2/ramps/on/quotes", async (req, res) => {
     assert(amount, "Amount is required")
     assert(fiat, "fiat is required")
     assert(currency, "currency is required")
-    const url = `https://api.onramper.com/quotes/${fiat||"usd"}/${currency||"eth"}?amount=${amount}&paymentMethod=${paymentMethod||"creditcard"}`;
+    const url = `https://api.onramper.com/quotes/${fiat}/${currency}?amount=${amount}&paymentMethod=${paymentMethod||"creditcard"}`;
     const response = await fetch(url, {
       method: "GET",
       headers: {
@@ -78,7 +93,6 @@ app.get("/v2/ramps/on/quotes", async (req, res) => {
       }
     });
     const data = await response.json();
-    console.log(data)
   
     return res.status(200).json({data});
   } catch (error) {
@@ -92,6 +106,7 @@ app.get("/v2/ramps/on/best-quote", async (req, res) => {
     const { amount, fiat, currency, paymentMethod, network, address } = req.query;
     assert(amount, "Amount is required")
     assert(address, "Wallet address is required")
+    assert(network, "Network is required")
     const supported = await fetch("https://api.onramper.com/supported", {
       method: "GET",
       headers: {
@@ -100,19 +115,19 @@ app.get("/v2/ramps/on/best-quote", async (req, res) => {
     });
     const { crypto: cryptos } = (await supported.json()).message
     const crypto = cryptos.find(c => c.code.toLowerCase() === currency && c.network.toLowerCase() === network);
-    console.log("crypto:", crypto)
     const cryptoId = crypto?.id;
+    assert(cryptoId, "Currency is not supported")
   
     const bestQuote = await getBestQuote({
       source: fiat||"usd",
-      destination: cryptoId||"eth",
+      destination: cryptoId,
       amount,
       type: "buy",
       paymentMethod: paymentMethod||"creditcard",
       wallet: address,
-      network: network||"ethereum"
+      network: network
     });
-    console.log("Best quote:", bestQuote)
+    
     return res.status(200).json({data: bestQuote});
   } catch (error) {
     return res.status(400).json({ error: error.message })
@@ -126,7 +141,7 @@ app.get("/v2/ramps/on/checkout", async (req, res) => {
      * Authenticate Keyp ACCESS_TOKEN Here *
      ***************************************/
     
-    const { amount, fiat, currency, paymentMethod, network, address } = req.query;
+    const { amount, fiat, currency, network, address } = req.query;
     assert(amount, "Amount is required")
     assert(address, "Wallet address is required")
     assert(network, "Network is required")
@@ -140,21 +155,17 @@ app.get("/v2/ramps/on/checkout", async (req, res) => {
     const { crypto: cryptos } = (await supported.json()).message
     const crypto = cryptos.find(c => c.code.toLowerCase() === currency.toLowerCase() && c.network.toLowerCase() === network.toLowerCase());
     const cryptoId = crypto?.id;
-  
-    const bestQuote = await getBestQuote({
-      source: fiat,
-      destination: cryptoId,
-      amount: amount,
-      type: "buy",
-      paymentMethod: paymentMethod,
-      wallet: address,
-      network: network
-    });
-    console.log("Best quote:", bestQuote)
-  
+    assert(cryptoId, "Currency is not supported")
+    
     const baseUrl = "https://buy.onramper.com/";
     const url = `${baseUrl}?networkWallets=${network.toUpperCase()}:${address}&defaultAmount=${amount}&defaultFiat=${fiat}&defaultCrypto=${cryptoId.toUpperCase()}&apiKey=${process.env.ONRAMPER_API_KEY}`
     return res.status(200).json({ url });
+
+    /*************************************************************************
+     * TO DO: The commented lines below are where the GET "/checkout/intent" 
+     * endpoint is not working but preferred for getting the direct link 
+     * to checkout (transak, moonpay, etc.)
+     *************************************************************************/
     // const payload = {
     //   onramp: bestQuote.ramp,
     //   source: fiat,
