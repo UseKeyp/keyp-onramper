@@ -103,9 +103,8 @@ app.get("/v2/ramps/on/quotes", async (req, res) => {
 
 app.get("/v2/ramps/on/best-quote", async (req, res) => {
   try {
-    const { amount, fiat, currency, paymentMethod, network, address } = req.query;
+    const { amount, fiat, currency, paymentMethod, network } = req.query;
     assert(amount, "Amount is required")
-    assert(address, "Wallet address is required")
     assert(network, "Network is required")
     const supported = await fetch("https://api.onramper.com/supported", {
       method: "GET",
@@ -124,7 +123,6 @@ app.get("/v2/ramps/on/best-quote", async (req, res) => {
       amount,
       type: "buy",
       paymentMethod: paymentMethod||"creditcard",
-      wallet: address,
       network: network
     });
     

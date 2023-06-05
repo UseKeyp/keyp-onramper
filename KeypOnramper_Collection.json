@@ -1,0 +1,166 @@
+{
+    "client": "Thunder Client",
+    "collectionName": "KeypOnramper",
+    "dateExported": "2023-06-05T14:54:19.932Z",
+    "version": "1.1",
+    "folders": [],
+    "requests": [
+        {
+            "_id": "35059d91-d3e7-4fd2-909f-fcab60c00387",
+            "colId": "5b40c31c-72b4-43da-961a-103a402aa5d7",
+            "containerId": "",
+            "name": "limits",
+            "url": "http://localhost:3000/v2/ramps/limits/moonpay/usd/eth/creditcard",
+            "method": "GET",
+            "sortNum": 10000,
+            "created": "2023-06-05T14:39:49.276Z",
+            "modified": "2023-06-05T14:40:47.522Z",
+            "headers": [],
+            "params": [],
+            "tests": []
+        },
+        {
+            "_id": "b2516ff5-c32a-40c7-ab88-e79248151e46",
+            "colId": "5b40c31c-72b4-43da-961a-103a402aa5d7",
+            "containerId": "",
+            "name": "getAllCurrencies",
+            "url": "http://localhost:3000/v2/ramps/getAllCurrencies",
+            "method": "GET",
+            "sortNum": 20000,
+            "created": "2023-06-05T14:41:19.932Z",
+            "modified": "2023-06-05T14:41:50.422Z",
+            "headers": [],
+            "params": [],
+            "tests": []
+        },
+        {
+            "_id": "cd5114bf-dfa6-4d08-b964-54306c01b0b8",
+            "colId": "5b40c31c-72b4-43da-961a-103a402aa5d7",
+            "containerId": "",
+            "name": "paymentTypes",
+            "url": "http://localhost:3000/v2/ramps/paymentTypes",
+            "method": "GET",
+            "sortNum": 30000,
+            "created": "2023-06-05T14:42:15.557Z",
+            "modified": "2023-06-05T14:42:39.120Z",
+            "headers": [],
+            "params": [],
+            "tests": []
+        },
+        {
+            "_id": "38cc219b-ae69-41cc-8cae-44a041fcfd9b",
+            "colId": "5b40c31c-72b4-43da-961a-103a402aa5d7",
+            "containerId": "",
+            "name": "quotes",
+            "url": "http://localhost:3000/v2/ramps/on/quotes?amount=100&fiat=usd&currency=eth",
+            "method": "GET",
+            "sortNum": 40000,
+            "created": "2023-06-05T14:42:48.906Z",
+            "modified": "2023-06-05T14:43:42.290Z",
+            "headers": [],
+            "params": [
+                {
+                    "name": "amount",
+                    "value": "100",
+                    "isPath": false
+                },
+                {
+                    "name": "fiat",
+                    "value": "usd",
+                    "isPath": false
+                },
+                {
+                    "name": "currency",
+                    "value": "eth",
+                    "isPath": false
+                }
+            ],
+            "tests": []
+        },
+        {
+            "_id": "df443fc6-8242-4738-b43d-ede1a3d0003e",
+            "colId": "5b40c31c-72b4-43da-961a-103a402aa5d7",
+            "containerId": "",
+            "name": "bestQuote",
+            "url": "http://localhost:3000/v2/ramps/on/best-quote?amount=100&fiat=usd&currency=eth&network=ethereum&paymentMethod=creditcard",
+            "method": "GET",
+            "sortNum": 50000,
+            "created": "2023-06-05T14:43:54.369Z",
+            "modified": "2023-06-05T14:49:50.620Z",
+            "headers": [],
+            "params": [
+                {
+                    "name": "amount",
+                    "value": "100",
+                    "isPath": false
+                },
+                {
+                    "name": "fiat",
+                    "value": "usd",
+                    "isPath": false
+                },
+                {
+                    "name": "currency",
+                    "value": "eth",
+                    "isPath": false
+                },
+                {
+                    "name": "network",
+                    "value": "ethereum",
+                    "isPath": false
+                },
+                {
+                    "name": "paymentMethod",
+                    "value": "creditcard",
+                    "isPath": false
+                }
+            ],
+            "tests": []
+        },
+        {
+            "_id": "164cf064-f0af-4792-af36-499b6791164d",
+            "colId": "5b40c31c-72b4-43da-961a-103a402aa5d7",
+            "containerId": "",
+            "name": "checkout",
+            "url": "http://localhost:3000/v2/ramps/on/checkout?amount=100&fiat=usd&currency=eth&network=ethereum&address=0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
+            "method": "GET",
+            "sortNum": 60000,
+            "created": "2023-06-05T14:50:07.958Z",
+            "modified": "2023-06-05T14:51:32.201Z",
+            "headers": [],
+            "params": [
+                {
+                    "name": "amount",
+                    "value": "100",
+                    "isPath": false
+                },
+                {
+                    "name": "fiat",
+                    "value": "usd",
+                    "isPath": false
+                },
+                {
+                    "name": "currency",
+                    "value": "eth",
+                    "isPath": false
+                },
+                {
+                    "name": "network",
+                    "value": "ethereum",
+                    "isPath": false
+                },
+                {
+                    "name": "address",
+                    "value": "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
+                    "isPath": false
+                }
+            ],
+            "tests": []
+        }
+    ],
+    "settings": {
+        "options": {
+            "baseUrl": "http://localhost:3000"
+        }
+    }
+}

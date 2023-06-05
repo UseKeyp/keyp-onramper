@@ -1,3 +1,5 @@
+import fetch from "node-fetch";
+
 // This function will return true/false if the signature matches
 export function verifySignature(signature, secret, body) {
   const hash = crypto.createHmac('sha256', secret).update(body).digest('hex');
@@ -11,11 +13,10 @@ export async function getBestQuote({
 	amount,
 	type,
 	paymentMethod,
-	wallet,
 	network
 }) {
 	// getQuote
-	const url = `https://api.onramper.com/quotes/${source||"usd"}/${destination||"eth"}?amount=${amount||100}&paymentMethod=${paymentMethod||"creditcard"}&network=${network||"ethereum"}`;
+	const url = `https://api.onramper.com/quotes/${source||"usd"}/${destination}?amount=${amount}&paymentMethod=${paymentMethod}&network=${network}`;
 	const response = await fetch(url, {
 		method: "GET",
 		headers: {
